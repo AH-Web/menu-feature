@@ -1,0 +1,42 @@
+<?php
+/**
+ * @file
+ * Code for the Menu feature.
+ */
+
+include_once 'menu_feature.features.inc';
+
+
+function menu_feature_menus() {
+  $menu_files = array();
+}
+
+
+
+/**
+ * Import the menus.
+ */
+function menu_feature_import_menus($menu_export_files) {
+
+  module_load_include('inc', 'menu_import', 'includes/import');
+  $path = drupal_get_path('module', 'commons_main_menu');
+  foreach ($menu_export_files as $menu_name => $menu_export_file) {
+    $result = menu_import_file($path . '/' . $menu_export_file, $menu_name, array(
+      'link_to_content' => TRUE,
+      'create_content' => FALSE,
+      'remove_menu_items' => TRUE,
+    ));
+
+    $results[$menu_name] = $result;
+
+    $rows = array();
+    $msgs = menu_import_get_messages();
+
+    $rows[] = array(dt($msgs['items_imported'], array('@count' => $total_items)));
+    foreach ($result as $type => $value) {
+      $rows[] = array(dt($msgs[$type], array('@count' => $value)));
+    }
+
+    drush_print_table($rows);
+  }
+}
