@@ -19,7 +19,7 @@ function menu_feature_menus() {
 function menu_feature_import_menus($menu_export_files) {
 
   module_load_include('inc', 'menu_import', 'includes/import');
-  $path = drupal_get_path('module', 'commons_main_menu');
+  $path = drupal_get_path('module', 'menu_feature');
   foreach ($menu_export_files as $menu_name => $menu_export_file) {
     $result = menu_import_file($path . '/' . $menu_export_file, $menu_name, array(
       'link_to_content' => TRUE,
@@ -35,6 +35,80 @@ function menu_feature_import_menus($menu_export_files) {
     $rows[] = array(dt($msgs['items_imported'], array('@count' => $total_items)));
     foreach ($result as $type => $value) {
       $rows[] = array(dt($msgs[$type], array('@count' => $value)));
+    }
+
+    drush_print_table($rows);
+  }
+}
+
+/**
+ * Export the menus.
+ */
+function menu_feature_export_menus($menu_export_files) {
+
+  module_load_include('inc', 'menu_import', 'includes/import');
+  $path = drupal_get_path('module', 'menu_feature');
+  foreach ($menu_export_files as $menu_name => $menu_export_file) {
+    // Validate file exists.
+    if (file_exists($file)) {
+      return drush_set_error('', dt('File "!file" already exists or cannot be created.', array('!file' => $file)));
+    }
+
+    // Validate menu name.
+    $menu_exists = db_select('menu_custom', 'mc')->fields('mc', array('menu_name'))
+      ->condition('menu_name', $menu_name)->execute()->fetchColumn();
+
+    if (!$menu_exists) {
+      return drush_set_error('', dt('Menu "!menu" doesn\'t exist.', array('!menu' => $menu_name)));
+    }
+
+    // Prepare options and import menu.
+    $allowed_les = array('mac', 'unix', 'dos');
+    $options = array(
+      'line_ending'  => PHP_EOL,
+    );
+
+    $line_ending = 'unix';
+    if (count($line_ending) && in_array(current($line_ending), $allowed_les)) {
+      switch (current($line_ending)) {
+        case 'unix':
+          $options['line_ending'] = "\n";
+          break;
+        case 'mac':
+          $options['line_ending'] = "\r";
+          break;
+        case 'dos':
+          $options['line_ending'] = "\r\n";
+          break;
+      }
+    }
+
+    // Export language by default if i18n_menu is enabled.
+    if (module_exists('i18n_menu')) {
+      $options['export_language'] = 1;
+    }
+    if (count($export_language)) {
+      $options['export_language'] = current($export_language);
+    }
+    module_load_include('inc', 'menu_import', 'includes/export');
+    $result = menu_import_export_menu($menu_name, $options);
+
+    if (!empty($result['errors'])) {
+      $rows = array(array(dt('Export failed:')));
+      foreach ($result['errors'] as $error) {
+        $rows[] = array($error);
+      }
+    }
+    else {
+      $write_ok = @file_put_contents($file, $result['menu']);
+
+      if ($write_ok) {
+        $rows[] = array(dt('Menu "!menu" has been exported to "!file".',
+          array('!menu' => $menu_name, '!file' => $file)));
+      }
+      else {
+        $rows[] = array(dt('Couldn\'t write to "!file".', array('!file' => $file)));
+      }
     }
 
     drush_print_table($rows);
