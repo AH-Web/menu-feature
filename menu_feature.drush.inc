@@ -7,7 +7,7 @@
 /**
  * Implements hook_drush_command().
  */
-function commons_main_menu_drush_command() {
+function menu_feature_drush_command() {
   $items = array();
 
   $items['menu-feature-import-menus'] = array(
@@ -19,7 +19,7 @@ function commons_main_menu_drush_command() {
    $items['menu-feature-export-menus'] = array(
     'description' => 'Export menus.',
     'drupal dependencies' => array('menu_import', 'menu_feature'),
-    'aliases' => array('mf-import'),
+    'aliases' => array('mf-export'),
   );
 
   return $items;
