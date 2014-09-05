@@ -8,7 +8,10 @@ include_once 'menu_feature.features.inc';
 
 
 function menu_feature_menus() {
-  $menu_files = array();
+  $menu_files = array(
+  );
+
+  return $menu_files;
 }
 
 
@@ -49,9 +52,13 @@ function menu_feature_export_menus($menu_export_files) {
   module_load_include('inc', 'menu_import', 'includes/import');
   $path = drupal_get_path('module', 'menu_feature');
   foreach ($menu_export_files as $menu_name => $menu_export_file) {
+    $file_path = $path . '/' . $menu_export_file;
     // Validate file exists.
-    if (file_exists($file)) {
-      return drush_set_error('', dt('File "!file" already exists or cannot be created.', array('!file' => $file)));
+    if (file_exists($file_path)) {
+      $overwrite = drush_choice(array('no', 'yes'), dt('Overwrite Menu Export file'));
+      if (empty($overwrite)) {
+         return drush_set_error('', dt('File "!file" already exists or cannot be created.', array('!file' => $file_path)));
+      }
     }
 
     // Validate menu name.
@@ -68,7 +75,7 @@ function menu_feature_export_menus($menu_export_files) {
       'line_ending'  => PHP_EOL,
     );
 
-    $line_ending = 'unix';
+    $line_ending = array('unix');
     if (count($line_ending) && in_array(current($line_ending), $allowed_les)) {
       switch (current($line_ending)) {
         case 'unix':
@@ -87,9 +94,10 @@ function menu_feature_export_menus($menu_export_files) {
     if (module_exists('i18n_menu')) {
       $options['export_language'] = 1;
     }
-    if (count($export_language)) {
+
+    /*if (count($export_language)) {
       $options['export_language'] = current($export_language);
-    }
+    }*/
     module_load_include('inc', 'menu_import', 'includes/export');
     $result = menu_import_export_menu($menu_name, $options);
 
@@ -100,14 +108,14 @@ function menu_feature_export_menus($menu_export_files) {
       }
     }
     else {
-      $write_ok = @file_put_contents($file, $result['menu']);
+      $write_ok = @file_put_contents($file_path, $result['menu']);
 
       if ($write_ok) {
         $rows[] = array(dt('Menu "!menu" has been exported to "!file".',
-          array('!menu' => $menu_name, '!file' => $file)));
+          array('!menu' => $menu_name, '!file' => $file_path)));
       }
       else {
-        $rows[] = array(dt('Couldn\'t write to "!file".', array('!file' => $file)));
+        $rows[] = array(dt('Couldn\'t write to "!file".', array('!file' => $file_path)));
       }
     }
 

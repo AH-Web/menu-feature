@@ -1,9 +1,9 @@
-name = Commons Main Menu
+name = Menu Feature
 core = 7.x
 php = 5.2.4
+features[features_api][] = api:2
 dependencies[] = ctools
 dependencies[] = features
 dependencies[] = menu
 dependencies[] = menu_import
 dependencies[] = strongarm
-
